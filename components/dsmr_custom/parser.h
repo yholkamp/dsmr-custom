@@ -156,8 +156,6 @@ struct NumParser {
     while (decimals_to_scale-- > 0) {
       value *= 10;
     }
-    if (num_end_ptr >= end || *num_end_ptr != ')')
-      return res.fail(F("Missing ) or extra data"), num_end_ptr);
     return res.succeed(value).until(num_end_ptr + 1);
   }
 };
