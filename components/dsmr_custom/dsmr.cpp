@@ -34,6 +34,7 @@
 #ifdef USE_ARDUINO // Guard for Arduino-based platforms
 
 #include "dsmr.h" // Header for this component's Dsmr class
+#include "value_extract.h"
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h" // For YESNO, etc.
 
@@ -468,21 +469,16 @@ std::string Dsmr::parse_text_value_from_string(const std::string &value_str) {
 void Dsmr::process_line_for_custom_sensors(const char *line_buffer, size_t length) {
     if (length == 0) return;
     std::string line_str(line_buffer, length);
-    size_t open_paren_pos = line_str.find('(');
-    size_t close_paren_pos = line_str.rfind(')');
-
-    if (open_paren_pos == std::string::npos || close_paren_pos == std::string::npos ||
-        open_paren_pos >= close_paren_pos || (close_paren_pos == open_paren_pos + 1) ) {
-        ESP_LOGVV(TAG_CUSTOM_SENSORS, "Line '%s' not a valid OBIS value format for custom parsing.", line_str.c_str());
-        return;
-    }
-
-    std::string obis_code_str = line_str.substr(0, open_paren_pos);
-    std::string value_part_str = line_str.substr(open_paren_pos + 1, close_paren_pos - (open_paren_pos + 1));
-    obis_code_str.erase(std::remove_if(obis_code_str.begin(), obis_code_str.end(), ::isspace), obis_code_str.end());
+    ObisLineParts parts = extract_obis_and_last_value(line_str);
+    const std::string &obis_code_str = parts.obis_code_str;
+    const std::string &value_part_str = parts.last_value_segment;
 
     if (obis_code_str.empty()) {
         ESP_LOGVV(TAG_CUSTOM_SENSORS, "Empty OBIS code extracted from line '%s'.", line_str.c_str());
+        return;
+    }
+    if (value_part_str.empty()) {
+        ESP_LOGVV(TAG_CUSTOM_SENSORS, "Line '%s' contained no valid value segment for custom parsing.", line_str.c_str());
         return;
     }
 
