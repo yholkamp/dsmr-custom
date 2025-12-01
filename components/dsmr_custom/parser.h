@@ -156,18 +156,6 @@ struct NumParser {
     while (decimals_to_scale-- > 0) {
       value *= 10;
     }
-    if (unit && *unit) {
-      if (num_end_ptr >= end || *num_end_ptr != '*')
-        return res.fail(F("Missing unit separator *"), num_end_ptr);
-      const char *unit_start = ++num_end_ptr;
-      const char *expected_unit_char = unit;
-      while (num_end_ptr < end && *num_end_ptr != ')' && *expected_unit_char) {
-        if (tolower(static_cast<unsigned char>(*num_end_ptr++)) != tolower(static_cast<unsigned char>(*expected_unit_char++)))
-          return res.fail(F("Invalid unit"), unit_start);
-      }
-      if (*expected_unit_char)
-        return res.fail(F("Invalid unit"), unit_start);
-    }
     if (num_end_ptr >= end || *num_end_ptr != ')')
       return res.fail(F("Missing ) or extra data"), num_end_ptr);
     return res.succeed(value).until(num_end_ptr + 1);
